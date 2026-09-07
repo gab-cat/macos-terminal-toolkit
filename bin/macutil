@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+macutil - small macOS command-line diagnostics
+
+Usage:
+  macutil <command> [arguments]
+
+Commands:
+  memory    Show RAM and swap usage
+  system    Show macOS, hardware, and shell details
+  disk      Show disk usage and the largest local folders
+  ports     Show processes listening on TCP ports
+  dev       Show installed developer-tool versions
+  help      Show this guide
+
+The individual commands are also available as memstats, sysinfo, diskcheck,
+portcheck, and devcheck.
+EOF
+}
+
+command_name="${1:-help}"
+shift || true
+
+case "$command_name" in
+  memory|mem) exec memstats "$@" ;;
+  system|sys) exec sysinfo "$@" ;;
+  disk)       exec diskcheck "$@" ;;
+  ports|port) exec portcheck "$@" ;;
+  dev)        exec devcheck "$@" ;;
+  help|-h|--help) usage ;;
+  *)
+    echo "Unknown command: $command_name" >&2
+    echo >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+

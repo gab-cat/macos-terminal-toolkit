@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "memstats supports macOS only." >&2
+  exit 1
+fi
+
+page_size="$(sysctl -n hw.pagesize)"
+total_bytes="$(sysctl -n hw.memsize)"
+
+read -r used_gb total_gb available_gb < <(
+  vm_stat | awk -v page_size="$page_size" -v total="$total_bytes" '
+    /Pages free:/        { gsub("\\.", "", $3); free=$3 }
+    /Pages speculative:/ { gsub("\\.", "", $3); speculative=$3 }
+    END {
+      available=(free+speculative)*page_size
+      used=total-available
+      gib=1024*1024*1024
+      printf "%.1f %.1f %.1f\n", used/gib, total/gib, available/gib
+    }
+  '
+)
+
+swap_line="$(sysctl -n vm.swapusage)"
+swap_total_raw="$(awk '{print $3}' <<< "$swap_line")"
+swap_used_raw="$(awk '{print $6}' <<< "$swap_line")"
+swap_free_raw="$(awk '{print $9}' <<< "$swap_line")"
+
+to_gib() {
+  local value="${1%?}" unit="${1: -1}"
+  awk -v value="$value" -v unit="$unit" 'BEGIN {
+    if (unit == "G") result=value
+    else if (unit == "M") result=value/1024
+    else if (unit == "K") result=value/1024/1024
+    else result=value/1024/1024/1024
+    printf "%.2f", result
+  }'
+}
+
+swap_total="$(to_gib "$swap_total_raw")"
+swap_used="$(to_gib "$swap_used_raw")"
+swap_free="$(to_gib "$swap_free_raw")"
+
+printf 'RAM  : %s GB used / %s GB total / %s GB available\n' "$used_gb" "$total_gb" "$available_gb"
+printf 'SWAP : %s GB used / %s GB total / %s GB free\n' "$swap_used" "$swap_total" "$swap_free"

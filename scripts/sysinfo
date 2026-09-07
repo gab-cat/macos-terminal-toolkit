@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "sysinfo supports macOS only." >&2
+  exit 1
+fi
+
+bytes_to_gib() { awk -v bytes="$1" 'BEGIN { printf "%.1f GB", bytes/1024/1024/1024 }'; }
+
+printf '%-14s %s\n' "macOS" "$(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+printf '%-14s %s\n' "Model" "$(sysctl -n hw.model)"
+printf '%-14s %s\n' "Architecture" "$(uname -m)"
+printf '%-14s %s\n' "CPU" "$(sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.machine)"
+printf '%-14s %s\n' "CPU cores" "$(sysctl -n hw.logicalcpu) logical / $(sysctl -n hw.physicalcpu) physical"
+printf '%-14s %s\n' "Memory" "$(bytes_to_gib "$(sysctl -n hw.memsize)")"
+printf '%-14s %s\n' "Uptime" "$(uptime | sed 's/.*up *//; s/, *[0-9][0-9]* user.*//')"
+printf '%-14s %s\n' "Shell" "${SHELL:-unknown}"
+

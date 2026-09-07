@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Filesystem usage"
+df -h /
+
+echo
+echo "Largest folders in the current directory"
+du -sh ./* 2>/dev/null | sort -hr | head -n 10 || true
+
+if command -v docker >/dev/null 2>&1; then
+  echo
+  echo "Docker disk usage"
+  docker system df 2>/dev/null || echo "Docker is installed but its daemon is unavailable."
+fi
+

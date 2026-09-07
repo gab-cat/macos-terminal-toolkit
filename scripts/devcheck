@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tools=(git gh python3 node npm pnpm java go rustc cargo docker kubectl terraform aws jq eza starship)
+
+printf '%-14s %s\n' "TOOL" "VERSION"
+printf '%-14s %s\n' "--------------" "----------------------------------------"
+for tool in "${tools[@]}"; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    version="$($tool --version 2>&1 | head -n 1)"
+    printf '%-14s %s\n' "$tool" "$version"
+  else
+    printf '%-14s %s\n' "$tool" "not installed"
+  fi
+done
+

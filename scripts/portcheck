@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v lsof >/dev/null 2>&1; then
+  echo "lsof is required." >&2
+  exit 1
+fi
+
+echo "Listening TCP ports"
+lsof -nP -iTCP -sTCP:LISTEN || true
+
